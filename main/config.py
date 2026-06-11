@@ -26,28 +26,61 @@ class Config:
             self._load_config()
     
     def _load_config(self):
-        """加载配置文件"""
-        # 获取配置文件路径（从项目根目录查找，而不是从 main 目录）
-        # __file__ 是 main/config.py，我们需要往上一级找到项目根目录
+        """加载配置文件
+        优先级：
+        1. 本地 config.yaml（开发环境）
+        2. 环境变量（云端部署，如 Posit.cloud）
+        """
         config_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)),  # 往上一级到项目根目录
+            os.path.dirname(os.path.dirname(__file__)),
             'config.yaml'
         )
         
-        # 检查配置文件是否存在
-        if not os.path.exists(config_path):
-            raise FileNotFoundError(
-                f"配置文件不存在: {config_path}\n"
-                f"请创建 config.yaml 配置文件"
-            )
+        # 尝试读取 config.yaml
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    self._config_data = yaml.safe_load(f)
+                print(f"✅ 配置文件加载成功: {config_path}")
+                return
+            except Exception as e:
+                print(f"⚠️ config.yaml 读取失败: {e}，回退到环境变量")
         
-        # 读取配置文件
-        try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                self._config_data = yaml.safe_load(f)
-            print(f"✅ 配置文件加载成功: {config_path}")
-        except Exception as e:
-            raise Exception(f"配置文件读取失败: {e}")
+        # 云端模式：从环境变量构建配置
+        print("☁️ 未找到 config.yaml，使用环境变量模式（云端部署）")
+        self._config_data = self._build_config_from_env()
+    
+    def _build_config_from_env(self) -> dict:
+        """从环境变量构建配置字典（Posit.cloud 等云平台适用）"""
+        return {
+            'openai': {
+                'api_base': os.environ.get('VETA_OPENAI_API_BASE', 'https://api.deepseek.com/v1'),
+                'api_key': os.environ.get('VETA_OPENAI_API_KEY', 'sk-placeholder'),
+                'model': os.environ.get('VETA_OPENAI_MODEL', 'deepseek-chat'),
+                'temperature': float(os.environ.get('VETA_OPENAI_TEMPERATURE', '0.9')),
+            },
+            'redis': {
+                'host': os.environ.get('VETA_REDIS_HOST', '127.0.0.1'),
+                'port': int(os.environ.get('VETA_REDIS_PORT', '6378')),
+            },
+            'rag': {
+                'folder_path': os.environ.get('VETA_RAG_FOLDER', './rag_data'),
+                'index_path': os.environ.get('VETA_RAG_INDEX', './faiss_index'),
+                'embedding_model': os.environ.get('VETA_EMBEDDING_MODEL', 'Qwen/Qwen3-Embedding-0.6B'),
+                'rerank_model': os.environ.get('VETA_RERANK_MODEL', 'BAAI/bge-reranker-base'),
+                'bm25_k': int(os.environ.get('VETA_BM25_K', '5')),
+                'faiss_k': int(os.environ.get('VETA_FAISS_K', '5')),
+                'top_n': int(os.environ.get('VETA_TOP_N', '1')),
+                'chunk_size': int(os.environ.get('VETA_CHUNK_SIZE', '500')),
+                'chunk_overlap': int(os.environ.get('VETA_CHUNK_OVERLAP', '50')),
+                'device': os.environ.get('VETA_DEVICE', 'cpu'),
+            },
+            'vetchat': {
+                'max_tokens': int(os.environ.get('VETA_MAX_TOKENS', '384')),
+                'max_summary_tokens': int(os.environ.get('VETA_MAX_SUMMARY_TOKENS', '128')),
+                'trim_max_tokens': int(os.environ.get('VETA_TRIM_MAX_TOKENS', '2500')),
+            },
+        }
     
     def get(self, key: str, default: Any = None) -> Any:
         """
