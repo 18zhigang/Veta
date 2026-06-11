@@ -1,0 +1,95 @@
+{
+  "name": "veta-smart-pet-hospital",
+  "version": "1.0.0",
+  "description": "基于 LangGraph 多智能体框架和 LLM 构建的智能宠物医疗问诊系统",
+  "author": "Jimmy0743",
+  "license": "MIT",
+  "repository": "https://github.com/Jimmy0743/Veta.git",
+
+  "runtime": {
+    "language": "python",
+    "version": ">=3.12",
+    "venv": "venv"
+  },
+
+  "entry": {
+    "command": "uvicorn main.app:app --host 0.0.0.0 --port 3367",
+    "module": "main/app.py",
+    "port": 3367
+  },
+
+  "dependencies": {
+    "fastapi": "0.116.0",
+    "uvicorn": "0.35.0",
+    "jinja2": "3.1.6",
+    "python-multipart": "0.0.20",
+    "langgraph": "0.6.7",
+    "langchain": "0.3.26",
+    "langchain-openai": "0.3.27",
+    "langchain-core": "0.3.75",
+    "langchain-community": "0.3.27",
+    "langmem": "0.0.29",
+    "langchain-huggingface": "0.3.1",
+    "sentence-transformers": "5.1.0",
+    "faiss-cpu": "1.12.0",
+    "rank-bm25": "0.2.2",
+    "pypdf": "6.0.0",
+    "python-pptx": "1.0.2",
+    "markdownify": "1.2.0",
+    "redis": "6.4.0",
+    "pydantic": "2.11.7",
+    "tqdm": "4.67.1",
+    "pyyaml": "6.0.2",
+    "python-dotenv": "1.1.1"
+  },
+
+  "config": {
+    "file": "config.yaml",
+    "required_keys": [
+      "openai.api_key",
+      "openai.api_base",
+      "openai.model"
+    ],
+    "defaults": {
+      "openai.api_base": "https://api.deepseek.com",
+      "openai.model": "deepseek-chat",
+      "openai.temperature": 0.9,
+      "redis.host": "127.0.0.1",
+      "redis.port": 6378,
+      "rag.device": "cpu"
+    }
+  },
+
+  "models": {
+    "llm": "deepseek-chat (via DeepSeek API)",
+    "embedding": "Qwen/Qwen3-Embedding-0.6B",
+    "reranker": "BAAI/bge-reranker-base"
+  },
+
+  "services": {
+    "redis": {
+      "required": false,
+      "note": "可选，有内存回退模式",
+      "port": 6378
+    }
+  },
+
+  "scripts": {
+    "start": "start_veta.bat",
+    "start_linux": "./local.sh"
+  },
+
+  "structure": {
+    "main/": "应用代码",
+    "main/app.py": "FastAPI 主入口",
+    "main/animal_hospital.py": "模拟问诊模式 (11节点LangGraph)",
+    "main/vet.py": "兽医问答模式 (3节点LangGraph + RAG)",
+    "main/rag.py": "RAG 检索系统 (FAISS+BM25+Rerank)",
+    "main/chatstore.py": "对话存储 (Redis/内存)",
+    "main/config.py": "配置管理",
+    "main/prompt.py": "系统提示词",
+    "main/templates/": "HTML 模板",
+    "main/static/": "静态资源",
+    "rag_data/": "RAG 知识库文档"
+  }
+}
